@@ -1,0 +1,129 @@
+name: Daily check upstream version
+
+on:
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    # time in UTC timezone
+    - cron:  '22 16 * * *'
+
+jobs:
+  update_version:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:focal
+#      volumes:
+#        - my_docker_volume:/volume_mount
+    outputs:
+      check_status: ${{ steps.check_new_version.outputs.status }}
+      build_status: ${{ steps.check_run.outputs.run_state }}
+
+    steps:
+      - name: Update apt
+        run: |
+          export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true
+          apt update; apt upgrade -y;
+          apt install -y git devscripts git-buildpackage dh-exec pkg-kde-tools libpkgconf-dev libsqlite3-dev
+          echo "=== env"
+          env
+          echo "=== os-release"
+          cat /etc/os-release
+
+      - name: Checkout build2-staged
+        uses: actions/checkout@v2
+        with:
+#          repository: pioneer19/build2-staged
+#          ref: ubuntu/focal
+          fetch-depth: 0
+
+      - name: Copy functions.sh
+        run: |
+          if git branch -a | grep ubuntu/focal_new
+          then
+              echo "error: git branch ubuntu/focal_new exists"
+              exit 1
+          fi
+          echo "=== cp .github/workflows/functions.sh ../"
+          cp .github/workflows/functions.sh ../
+
+      - name: run uscan for new upstream version
+        id: check_new_version
+        shell: bash
+        run: |
+          git checkout ubuntu/focal
+          if uscan --verbose
+          then
+              echo "::set-output name=status::outdated"
+          else
+              echo "::set-output name=status::up_to_date"
+          fi
+
+      - name: Update build2-staged
+        id: update_build2_staged
+        if: ${{ steps.check_new_version.outputs.status == 'outdated' }}
+        shell: bash
+        run: |
+          . ../functions.sh
+          import_orig_tar_xz
+          update_changelog build2-staged
+
+          (sleep 30; time dd if=/dev/urandom of=./tmp.data bs=1M count=10240; sleep 30; rm ./tmp.data)&
+          dpkg-buildpackage -us -uc | tee ../build.log || true
+          if update_symbols
+          then
+              dpkg-buildpackage -us -uc | tee ../build.log
+          fi
+
+          install_debs_and_remove_files build2-staged
+
+      - name: Checkout build2-tools-staged
+        if: ${{ steps.check_new_version.outputs.status == 'outdated' }}
+        uses: actions/checkout@v2
+        with:
+          repository: pioneer19/build2-tools-staged
+          ref: ubuntu/focal
+          token: ${{ secrets.WRITE_BUILD2_TOOLS_STAGED }}
+          fetch-depth: 0
+
+      - name: Update build2-tools-staged
+        id: update_build2_tools_staged
+        if: ${{ steps.check_new_version.outputs.status == 'outdated' }}
+        shell: bash
+        run: |
+          . ../functions.sh
+          echo "=== ls -la ."
+          ls -la .
+          import_orig_tar_xz
+          update_changelog build2-tools-staged
+          update_control
+
+          dpkg-buildpackage -us -uc | tee ../build.log || true
+          if update_symbols
+          then
+              dpkg-buildpackage -us -uc | tee ../build.log
+          fi
+
+          install_debs_and_remove_files build2-tools-staged
+
+      - name: Run tools
+        id:   check_run
+        if: ${{ steps.check_new_version.outputs.status == 'outdated' }}
+        shell: bash
+        run: |
+          echo "=== b-staged --version"
+          b-staged --version
+          echo "=== bpkg-staged --version"
+          bpkg-staged --version
+          echo "=== bdep-staged --version"
+          bdep-staged --version
+
+          echo "::set-output name=run_state::success"
+
+  send_mail:
+    runs-on: ubuntu-latest
+    needs: update_version
+    if: ${{ needs.update_version.outputs.check_status == 'outdated' }}
+    steps:
+      - run: |
+          echo ${{ needs.update_version.outputs.check_status }}
+          # error will send mail
+          false
