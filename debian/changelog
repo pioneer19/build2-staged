@@ -1,0 +1,5 @@
+build2-staged (0.13.0-z-20.04ppa2) focal; urgency=low
+
+  * stable released, so this is fake to use stable instead of staged
+
+ -- Alex Syrnikov <pioneer19@mailo.com>  Mon, 20 Jul 2020 20:51:40 +0300

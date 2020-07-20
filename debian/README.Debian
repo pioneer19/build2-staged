@@ -1,0 +1,6 @@
+fake package to use stable build2 when staged version is outdated
+
+ build2 is an open source (Expat), cross-platform build tool from
+ build2 toolchain for developing and packaging C++ code. Package
+ manager (bpkg) and dependency manager (bdep) is in build2-tools
+ package.

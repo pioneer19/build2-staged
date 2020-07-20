@@ -1,0 +1,33 @@
+Source: build2-staged
+Section: devel
+Priority: optional
+Maintainer: Alex Syrnikov <pioneer19@mailo.com>
+Build-Depends: debhelper-compat (= 12),
+Standards-Version: 4.5.0
+Homepage: https://build2.org/
+
+Package: build2-staged
+Architecture: any
+Multi-Arch: foreign
+Depends: build2 (>=0.13.0),
+ ${misc:Depends}
+Replaces: libbuild2-staged-0.13, libbutl-staged-0.13,
+ build2-staged-dev, libbpkg-staged-0.13
+Provides: libbuild2-staged-0.13, libbutl-staged-0.13,
+ build2-staged-dev, libbpkg-staged-0.13
+Description: fake package to use stable build2 instead of staged
+ This is fake package. When stable version relesed, staged will use
+ binaries from stable version and will not conflict with 
+ build2 and build2-tools.
+ .
+ build2 is an open source (Expat), cross-platform build tool from
+ build2-toolchain for developing and packaging C++ code.
+
+Package: build2-tools-staged
+Architecture: any
+Multi-Arch: foreign
+Depends: build2-staged,
+ ${misc:Depends}
+Description: fake package to use stable build2-tools instead of staged
+ bdep is dependency manager
+ bpkg is package manager

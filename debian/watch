@@ -1,0 +1,8 @@
+version=4
+# uscan --no-download --verbose
+# https://download.build2.org/(\d\S+)/ build2-toolchain-(\d\S+)\.tar\.xz
+# https://stage.build2.org/0/0.13.0-a.0/
+# 0.13.0-a.0.20200701114314.54f2485e7ef3
+opts="compression=xz, \
+      uversionmangle=s/([0-9.]*-a.0.[0-9]*).[0-9a-f]*$/$1/" \
+https://stage.build2.org/0/(\d\S+)/ build2-toolchain-(\d\S+)\.tar\.xz debian

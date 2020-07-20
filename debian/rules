@@ -1,0 +1,16 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+export DEB_CFLAGS_MAINT_APPEND  = -Wall -pedantic
+export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
+
+%:
+	dh $@ --buildsystem=makefile
+
+override_dh_auto_build:
+	:
+
+override_dh_auto_install:
+	install -d ./debian/tmp/usr/bin
+	cp -P ./usr/bin/* ./debian/tmp/usr/bin
