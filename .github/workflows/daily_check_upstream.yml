@@ -18,11 +18,16 @@ jobs:
       build_status: ${{ steps.check_run.outputs.run_state }}
 
     steps:
-      - name: Update apt
+      - name: Update apt and install packages
         run: |
           export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true
           apt update; apt upgrade -y;
           apt install -y git devscripts git-buildpackage dh-exec pkg-kde-tools libpkgconf-dev libsqlite3-dev
+
+          # install nodejs from nodesource
+          curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+
           echo "=== env"
           env
           echo "=== os-release"
@@ -42,19 +47,23 @@ jobs:
               echo "error: git branch ubuntu/focal_new exists"
               exit 1
           fi
-          echo "=== cp .github/workflows/functions.sh ../"
+          echo "=== cp .github/workflows/functions.sh ../ ==="
           cp .github/workflows/functions.sh ../
 
       - name: run uscan for new upstream version
         id: check_new_version
         shell: bash
         run: |
-          git checkout ubuntu/focal
-          if uscan --verbose
+          . ../functions.sh
+          git checkout ubuntu/focal_template
+          USCAN_LOG=$(mktemp)
+          if uscan --verbose > $USCAN_LOG
           then
-              echo "::set-output name=status::outdated"
+            create_runtime_config $USCAN_LOG
+            rm "$USCAN_LOG"
+            echo "::set-output name=status::outdated"
           else
-              echo "::set-output name=status::up_to_date"
+            echo "::set-output name=status::up_to_date"
           fi
 
       - name: Update build2-staged
@@ -63,14 +72,15 @@ jobs:
         shell: bash
         run: |
           . ../functions.sh
-          import_orig_tar_xz
-          update_changelog build2-staged
+          update_debian_dir_push_to_focal_new
+          tar xf ../build2-staged*.orig.tar.xz --strip-components=1
 
           (sleep 30; time dd if=/dev/urandom of=./tmp.data bs=1M count=10240; sleep 30; rm ./tmp.data)&
           dpkg-buildpackage -us -uc | tee ../build.log || true
           if update_symbols
           then
-              dpkg-buildpackage -us -uc | tee ../build.log
+            tar xf ../build2-staged*.orig.tar.xz --strip-components=1
+            dpkg-buildpackage -us -uc | tee ../build.log
           fi
 
           install_debs_and_remove_files build2-staged
@@ -80,7 +90,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: pioneer19/build2-tools-staged
-          ref: ubuntu/focal
+          ref: ubuntu/focal_template
           token: ${{ secrets.WRITE_BUILD2_TOOLS_STAGED }}
           fetch-depth: 0
 
@@ -92,14 +102,18 @@ jobs:
           . ../functions.sh
           echo "=== ls -la ."
           ls -la .
-          import_orig_tar_xz
-          update_changelog build2-tools-staged
-          update_control
-
+          echo "=== ls -la .."
+          ls -la ..
+          update_debian_dir_push_to_focal_new
+          . ../runtime_config.sh
+          mk-origtargz ../$UPSTREAM_FILE_NAME
+          tar xf ../build2-tools-staged*orig.tar.xz --strip-components=1
           dpkg-buildpackage -us -uc | tee ../build.log || true
+
           if update_symbols
           then
-              dpkg-buildpackage -us -uc | tee ../build.log
+            tar xf ../build2-tools-staged*orig.tar.xz --strip-components=1
+            dpkg-buildpackage -us -uc | tee ../build.log
           fi
 
           install_debs_and_remove_files build2-tools-staged
