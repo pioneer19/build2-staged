@@ -1,0 +1,45 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+export DEB_CFLAGS_MAINT_APPEND  = -Wall -pedantic
+export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
+
+%:
+	dh $@ --with pkgkde_symbolshelper --buildsystem=makefile
+
+override_dh_clean:
+	bash -c "if [[ -x debian/tmp/b-boot/build2/b-boot ]]; then debian/tmp/b-boot/build2/b-boot config.cxx=g++ clean disfigure; fi"
+	bash -c "if [[ -x build2/b-boot ]]; then build2/b-boot clean disfigure; rm -f build2/b-boot; fi"
+	dh_clean
+
+override_dh_auto_build:
+	mkdir -p debian/tmp/b-boot
+	dh_auto_build -- -C debian/tmp/b-boot -f ../../../build2/bootstrap.gmake CXXFLAGS="-O0"
+	debian/tmp/b-boot/build2/b-boot --no-progress -v \
+		config.cxx=$(CXX)   \
+		config.cc.coptions="-O0" \
+		config.cc.poptions=-I/usr/include/pkgconf \
+		config.cc.loptions=-L/usr/lib/$(DEB_HOST_MULTIARCH) \
+		config.bin.lib=static \
+		build2/build2/exe{b}
+	rm -rf debian/tmp/b-boot
+	mv build2/build2/b build2/b-boot
+	build2/b-boot configure -v        \
+		config.cxx=$(CXX)         \
+		config.c.coptions="$(CFLAGS)"     \
+		config.cxx.coptions="$(CXXFLAGS)" \
+		config.cc.poptions="$(CPPFLAGS)"  \
+		config.cc.loptions="$(LDFLAGS)"   \
+		config.bin.lib=shared	  \
+		config.install.root=/usr  \
+		config.install.lib="/usr/lib/$(DEB_HOST_MULTIARCH)" \
+		config.install.chroot=./debian/tmp
+	build2/b-boot -v --no-progress update-for-install libbutl/ build2/
+
+override_dh_auto_install:
+	install -d ./debian/tmp
+	build2/b-boot -v --no-progress install: build2/ libbutl/
+	rm -r ./debian/tmp/usr/share/doc/build2/LICENSE \
+		./debian/tmp/usr/share/doc/libbutl/LICENSE
+	mv ./debian/tmp/usr/share/man/man1/b.1 ./debian/tmp/usr/share/man/man1/b-staged.1

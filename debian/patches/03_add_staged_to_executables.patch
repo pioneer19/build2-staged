@@ -1,0 +1,35 @@
+From: Alex Syrnikov <pioneer19@mailo.com>
+Subject: Add suffix "-staged" for b, bdep, bpkg executables
+diff --git a/bdep/bdep/utility.cxx b/bdep/bdep/utility.cxx
+--- a/bdep/bdep/utility.cxx
++++ b/bdep/bdep/utility.cxx
+@@ -267,7 +267,7 @@ namespace bdep
+   {
+     return co.bpkg_specified ()
+       ? co.bpkg ().string ().c_str ()
+-      : "bpkg" BDEP_EXE_SUFFIX;
++      : "bpkg-staged" BDEP_EXE_SUFFIX;
+   }
+
+   const char*
+@@ -275,7 +275,7 @@ namespace bdep
+   {
+     return co.build_specified ()
+       ? co.build ().string ().c_str ()
+-      : "b" BDEP_EXE_SUFFIX;
++      : "b-staged" BDEP_EXE_SUFFIX;
+   }
+
+   void
+diff --git a/bpkg/bpkg/utility.cxx b/bpkg/bpkg/utility.cxx
+index 9c9c991..4c15d0d 100644
+--- a/bpkg/bpkg/utility.cxx
++++ b/bpkg/bpkg/utility.cxx
+@@ -311,6 +311,6 @@ namespace bpkg
+   {
+     return co.build_specified ()
+       ? co.build ().string ().c_str ()
+-      : "b" BPKG_EXE_SUFFIX;
++      : "b-staged" BPKG_EXE_SUFFIX;
+   }
+ }
