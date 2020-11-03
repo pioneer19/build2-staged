@@ -11,8 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ubuntu:focal
-#      volumes:
-#        - my_docker_volume:/volume_mount
     outputs:
       check_status: ${{ steps.check_new_version.outputs.status }}
       build_status: ${{ steps.check_run.outputs.run_state }}
@@ -36,8 +34,6 @@ jobs:
       - name: Checkout build2-staged
         uses: actions/checkout@v2
         with:
-#          repository: pioneer19/build2-staged
-#          ref: ubuntu/focal
           fetch-depth: 0
 
       - name: Copy functions.sh
