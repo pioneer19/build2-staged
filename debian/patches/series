@@ -1,3 +1,2 @@
 01_build_only_build2_target.patch
 02_fix_libs_version.patch
-03_add_staged_to_executables.patch

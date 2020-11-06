@@ -34,8 +34,9 @@ override_dh_auto_build:
 		config.bin.lib=shared	  \
 		config.install.root=/usr  \
 		config.install.lib="/usr/lib/$(DEB_HOST_MULTIARCH)" \
-		config.install.chroot=./debian/tmp
-	build2/b-boot -v --no-progress update-for-install libbutl/ build2/
+		config.install.chroot=./debian/tmp \
+		config.bin.exe.suffix=-staged
+	build2/b-boot -v --no-progress update-for-install: libbutl/ build2/
 
 override_dh_auto_install:
 	install -d ./debian/tmp

@@ -1,2 +1,1 @@
-#!/usr/bin/dh-exec
-usr/bin/b => usr/bin/b-staged
+usr/bin/b-staged
