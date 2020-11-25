@@ -8,7 +8,8 @@ on:
 
 jobs:
   update_version:
-    runs-on: ubuntu-latest
+    # runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     container:
       image: ubuntu:focal
     outputs:
