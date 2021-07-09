@@ -1,0 +1,2 @@
+libbuild2-staged-0.14: package-name-doesnt-match-sonames
+libbuild2-staged-0.14: hardening-no-fortify-functions
